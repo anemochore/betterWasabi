@@ -82,6 +82,12 @@ let imgs = (() => {
     img.src = img.getAttribute("data-src");
     img.className = 'lz-lazyloaded';
   }
+  
+  const MINIMUM_WIDTH = 100;
+  if(imgs[imgs.length-1].naturalWidth < MINIMUM_WIDTH) {
+    $(imgs[imgs.length-1]).remove();
+    imgs = imgs.slice(0, imgs.length-1);
+  }
   imgs = [...targetDiv.querySelectorAll('img.lz-lazyloaded')];
   return imgs;
 })();
@@ -130,13 +136,13 @@ $(window).on("load", () => {
     let heights = imgs.map(img => img.naturalHeight);
     let testWidths = widths.slice(1, widths.length-1);
     let testHeights = heights.slice(1, heights.length-1);
-    let modeWidth = getMode(testWidths); //no need to slice testWidths
-    let modeHeight = getMode(testHeights); //no need to slice testWidths
+    let modeWidth = getMode(testWidths); //no need to slice
+    let modeHeight = getMode(testHeights); //no need to slice
     
     let maxWidth = Math.max(...testWidths);
     let minWidth = Math.min(...testWidths);
     
-    if(modeWidth > modeHeight) { //°¡·Î°¡ ¼¼·Îº¸´Ù ³ĞÀº ÀÌ¹ÌÁö°¡ ´ë´Ù¼ö¶ó¸é °­Á¦·Î ½Ì±Û ºä ¸ğµå
+    if(modeWidth > modeHeight) { //ê°€ë¡œê°€ ì„¸ë¡œë³´ë‹¤ ë„“ì€ ì´ë¯¸ì§€ê°€ ëŒ€ë‹¤ìˆ˜ë¼ë©´ ê°•ì œë¡œ ì‹±ê¸€ ë·° ëª¨ë“œ
       for(let i=0, len=imgs.length; i<len; i++) 
         imgs[i].setAttribute('page', 'double');
       
@@ -145,7 +151,7 @@ $(window).on("load", () => {
     }
     else {
       areImagesFixed = true;
-      if(isAlmostEqual(modeWidth*2, maxWidth)) //ÀÌ¹ÌÁö ³Êºñ ÃÖºó°ª*2°¡ ÃÖ´ë ³Êºñ¿Í °ÅÀÇ °°´Ù¸é ¹Í½ºÆ® ¸ğµå
+      if(isAlmostEqual(modeWidth*2, maxWidth)) //ì´ë¯¸ì§€ ë„ˆë¹„ ìµœë¹ˆê°’*2ê°€ ìµœëŒ€ ë„ˆë¹„ì™€ ê±°ì˜ ê°™ë‹¤ë©´ ë¯¹ìŠ¤íŠ¸ ëª¨ë“œ
         areImagesFixed = false;
       
       console.log('mixed images!');  //dev
@@ -229,7 +235,6 @@ $(window).on("load", () => {
               
             if(insertBlankFirst) {
               $(img0).remove();
-              console.log(imgs)
               imgs = imgs.slice(1);
             }
             else {
@@ -411,7 +416,8 @@ $(window).on("load", () => {
   }
   addKeyDownListernerIfNone();
 
-  function firstRun() {
+  //first run
+  (() => {
     alert2('isDualViewMode: '     + isDualViewMode + '<br>' +
           ' isRightToLeftMode: '  + isRightToLeftMode + '<br>' +
           ' insertBlankFirst: '   + insertBlankFirst);
@@ -422,8 +428,7 @@ $(window).on("load", () => {
       document.dispatchEvent(new KeyboardEvent('keydown', {'key': '~'}));
     
     isSilentRun = false;
-  }
-  firstRun();
+  })();
   
   function resizeAllimages() {
     const HEIGHT = window.innerHeight;
@@ -443,7 +448,6 @@ $(window).on("load", () => {
       if(lastNotDoublePage < 0) lastNotDoublePage = len - 1;
       img0.width = imgs[lastNotDoublePage].width;
       img0.height = imgs[lastNotDoublePage].height;
-      if(img0.width === 0) console.log(imgs);
     }
   }
   resizeAllimages();
