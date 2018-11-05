@@ -84,8 +84,9 @@ let imgs = (() => {
   }
   
   const MINIMUM_WIDTH = 100;
-  if(imgs[imgs.length-1].naturalWidth < MINIMUM_WIDTH) {
-    $(imgs[imgs.length-1]).remove();
+  let img = imgs[imgs.length-1];
+  if(!img || (img && img.naturalWidth < MINIMUM_WIDTH)) {
+    $(img).remove();
     imgs = imgs.slice(0, imgs.length-1);
   }
   imgs = [...targetDiv.querySelectorAll('img.lz-lazyloaded')];
@@ -97,7 +98,7 @@ let width0;
 img0.src = '/template/images/transparent.png';
 
 let addedListeners = {};
-let isSilentRun = true;
+let isSilentRun = false;
 
 if(imgs.every(img => img.complete)) letsGo();
 else $(window).on("load", letsGo());
@@ -148,7 +149,7 @@ function letsGo() {
     let maxWidth = Math.max(...testWidths);
     let minWidth = Math.min(...testWidths);
     
-    if(modeWidth > modeHeight) { //°¡·Î°¡ ¼¼·Îº¸´Ù ³ĞÀº ÀÌ¹ÌÁö°¡ ´ë´Ù¼ö¶ó¸é °­Á¦·Î ½Ì±Û ºä ¸ğµå
+    if(modeWidth > modeHeight) { //ê°€ë¡œê°€ ì„¸ë¡œë³´ë‹¤ ë„“ì€ ì´ë¯¸ì§€ê°€ ëŒ€ë‹¤ìˆ˜ë¼ë©´ ê°•ì œë¡œ ì‹±ê¸€ ë·° ëª¨ë“œ
       for(let i=0, len=imgs.length; i<len; i++) 
         imgs[i].setAttribute('page', 'double');
       
@@ -157,7 +158,7 @@ function letsGo() {
     }
     else {
       areImagesFixed = true;
-      if(isAlmostEqual(modeWidth*2, maxWidth)) //ÀÌ¹ÌÁö ³Êºñ ÃÖºó°ª*2°¡ ÃÖ´ë ³Êºñ¿Í °ÅÀÇ °°´Ù¸é ¹Í½ºÆ® ¸ğµå
+      if(isAlmostEqual(modeWidth*2, maxWidth)) //ì´ë¯¸ì§€ ë„ˆë¹„ ìµœë¹ˆê°’*2ê°€ ìµœëŒ€ ë„ˆë¹„ì™€ ê±°ì˜ ê°™ë‹¤ë©´ ë¯¹ìŠ¤íŠ¸ ëª¨ë“œ
         areImagesFixed = false;
       
       console.log('mixed images!');  //dev
@@ -224,9 +225,12 @@ function letsGo() {
       console.log(key + ' pressed');  //dev
       
       switch(key) {
-        case '~':
+        case 'flush with no scroll':
+          if(isSilentRun) flushImages();
+          break;
+        case 'scroll only':
           if(isSilentRun) {
-            flushImages();
+            nearestImgIdx = findAbsMinIdx(imgs);
             img.scrollIntoView();
           }
           break;
@@ -265,8 +269,7 @@ function letsGo() {
             }
             
             insertBlankFirst = !insertBlankFirst;
-            flushImages();
-            img.scrollIntoView();
+            flushImages().scrollIntoView();
             alert2("Insert Blank First Page: " + insertBlankFirst + " (dual view mode)");
           }
           isAtTheEdgeOfPage = false;
@@ -287,12 +290,13 @@ function letsGo() {
               else if(imgs[i].getAttribute('page') === 'right')
                 imgs[i].setAttribute('page', 'left');
               
-            flushImages();
-            img.scrollIntoView();
             if(!isSilentRun) {
+              flushImages().scrollIntoView();
               isRightToLeftMode = !isRightToLeftMode;
               alert2("Right-To-Left Mode: " + isRightToLeftMode + " (dual view mode)");
             }
+            else
+              flushImages();
           }
           isAtTheEdgeOfPage = false;
           break;
@@ -305,8 +309,7 @@ function letsGo() {
             }
             isDualViewMode = false;
             
-            flushImages();
-            img.scrollIntoView();
+            flushImages().scrollIntoView();
             alert2("Single View Mode");
           }
           isAtTheEdgeOfPage = false;
@@ -320,8 +323,7 @@ function letsGo() {
               isSilentRun = false;
             }
             
-            flushImages();
-            img.scrollIntoView();
+            flushImages().scrollIntoView();
             alert2("Dual View Mode");
           }
           isAtTheEdgeOfPage = false;
@@ -356,7 +358,6 @@ function letsGo() {
         case 'PageUp':
           evt.preventDefault();
           
-          console.log(nearestImgIdx);
           let offsetUp = 0;
           if(img.y >= 0) {
             offsetUp = -1;
@@ -414,13 +415,13 @@ function letsGo() {
         if((!insertBlankFirst && isRightToLeftMode) || !isDualViewMode) 
           img0.style.display = 'none';
         else {
-          let lastNotDoublePage, len=imgs.length;
-          for(lastNotDoublePage=len-1; lastNotDoublePage>=0; lastNotDoublePage--) 
-            if(imgs[lastNotDoublePage].getAttribute('page') !== 'double') break;
+          let notDoublePage, len=imgs.length;
+          for(notDoublePage=0; notDoublePage<len; notDoublePage++) 
+            if(imgs[notDoublePage].getAttribute('page') !== 'double') break;
           
-          if(lastNotDoublePage < 0) lastNotDoublePage = len - 1;
-          img0.width = imgs[lastNotDoublePage].width;
-          img0.height = imgs[lastNotDoublePage].height;
+          if(notDoublePage === len) notDoublePage = 0;
+          img0.width = imgs[notDoublePage].width;
+          img0.height = imgs[notDoublePage].height;
         }
         
         let div = document.getElementById('gallery_vertical');
@@ -440,6 +441,9 @@ function letsGo() {
           for(let i=0, len=imgs.length-1; i<len; i++) 
             if(imgs[i].getAttribute('page') === 'right' || imgs[i].getAttribute('page') === 'double' || imgs[i+1].getAttribute('page') === 'double')
               $(imgs[i]).after('<br class="fy-br">');
+      
+        let nearestImgIdx = findAbsMinIdx(imgs);
+        return imgs[nearestImgIdx];
       }
     };
   }
@@ -451,23 +455,38 @@ function letsGo() {
           ' isRightToLeftMode: '  + isRightToLeftMode + '<br>' +
           ' insertBlankFirst: '   + insertBlankFirst);
     
-    if(isRightToLeftMode) 
-      document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Tab'}));
-    else 
-      document.dispatchEvent(new KeyboardEvent('keydown', {'key': '~'}));
+    let root = document.getElementById('root');
+    root.style.maxWidth = '95%';
     
+    isSilentRun = true;
+    if(isRightToLeftMode) 
+      document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Tab'})); //tab and flush with no scroll
+    else
+      document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'flush with no scroll'}));
     isSilentRun = false;
   })();
   
   function resizeAllimages() {
     const HEIGHT = window.innerHeight;
-    const MARGIN_TOP_BOTTOM = 2;
     
     for(let i=0, len=imgs.length; i<len; i++) 
-      imgs[i].height = HEIGHT - MARGIN_TOP_BOTTOM;
+      imgs[i].height = HEIGHT;
     
-    let root = document.getElementById('root');
-    root.style.maxWidth = '90%';
+    if((!insertBlankFirst && isRightToLeftMode) || !isDualViewMode) 
+      img0.style.display = 'none';
+    else {
+      let notDoublePage, len=imgs.length;
+      for(notDoublePage=0; notDoublePage<len; notDoublePage++) 
+        if(imgs[notDoublePage].getAttribute('page') !== 'double') break;
+      
+      if(notDoublePage === len) notDoublePage = 0;
+      img0.width = imgs[notDoublePage].width;
+      //img0.height = imgs[notDoublePage].height;
+    }
+    
+    isSilentRun = true;
+    document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'scroll only'}));
+    isSilentRun = false;
   }
   resizeAllimages();
 
