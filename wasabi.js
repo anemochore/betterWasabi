@@ -46,7 +46,6 @@ observer.observe(document.documentElement, {
 let msgTimer;
 let msg = document.createElement('div');
 with(msg.style) {
-  display = 'none';
   position = 'fixed';
   top = '47.5%';
   left = '45%';
@@ -58,6 +57,7 @@ with(msg.style) {
   zIndex = '999999';
   overflow = 'auto';
 }
+msg.innerHTML = 'loading...';
 document.body.appendChild(msg);
 
 //navigation buttons
@@ -98,7 +98,13 @@ img0.src = '/template/images/transparent.png';
 
 let addedListeners = {};
 let isSilentRun = true;
-$(window).on("load", () => {
+
+if(imgs.every(img => img.complete)) letsGo();
+else $(window).on("load", letsGo());
+
+function letsGo() {
+  msg.style.display = 'none';
+  
   function addWindowListenerIfNone(eventType, fun) {
     if(addedListeners[eventType]) return;
     addedListeners[eventType] = fun;
@@ -142,7 +148,7 @@ $(window).on("load", () => {
     let maxWidth = Math.max(...testWidths);
     let minWidth = Math.min(...testWidths);
     
-    if(modeWidth > modeHeight) { //ê°€ë¡œê°€ ì„¸ë¡œë³´ë‹¤ ë„“ì€ ì´ë¯¸ì§€ê°€ ëŒ€ë‹¤ìˆ˜ë¼ë©´ ê°•ì œë¡œ ì‹±ê¸€ ë·° ëª¨ë“œ
+    if(modeWidth > modeHeight) { //°¡·Î°¡ ¼¼·Îº¸´Ù ³ÐÀº ÀÌ¹ÌÁö°¡ ´ë´Ù¼ö¶ó¸é °­Á¦·Î ½Ì±Û ºä ¸ðµå
       for(let i=0, len=imgs.length; i<len; i++) 
         imgs[i].setAttribute('page', 'double');
       
@@ -151,7 +157,7 @@ $(window).on("load", () => {
     }
     else {
       areImagesFixed = true;
-      if(isAlmostEqual(modeWidth*2, maxWidth)) //ì´ë¯¸ì§€ ë„ˆë¹„ ìµœë¹ˆê°’*2ê°€ ìµœëŒ€ ë„ˆë¹„ì™€ ê±°ì˜ ê°™ë‹¤ë©´ ë¯¹ìŠ¤íŠ¸ ëª¨ë“œ
+      if(isAlmostEqual(modeWidth*2, maxWidth)) //ÀÌ¹ÌÁö ³Êºñ ÃÖºó°ª*2°¡ ÃÖ´ë ³Êºñ¿Í °ÅÀÇ °°´Ù¸é ¹Í½ºÆ® ¸ðµå
         areImagesFixed = false;
       
       console.log('mixed images!');  //dev
@@ -263,6 +269,7 @@ $(window).on("load", () => {
             img.scrollIntoView();
             alert2("Insert Blank First Page: " + insertBlankFirst + " (dual view mode)");
           }
+          isAtTheEdgeOfPage = false;
           break;
         case 'Tab':
           evt.preventDefault();
@@ -287,6 +294,7 @@ $(window).on("load", () => {
               alert2("Right-To-Left Mode: " + isRightToLeftMode + " (dual view mode)");
             }
           }
+          isAtTheEdgeOfPage = false;
           break;
         case '1':
           if(isDualViewMode) {
@@ -301,6 +309,7 @@ $(window).on("load", () => {
             img.scrollIntoView();
             alert2("Single View Mode");
           }
+          isAtTheEdgeOfPage = false;
           break;
         case '2':
           if(!isDualViewMode) {
@@ -315,61 +324,72 @@ $(window).on("load", () => {
             img.scrollIntoView();
             alert2("Dual View Mode");
           }
+          isAtTheEdgeOfPage = false;
           break;
         case ' ':
         case 'Spacebar':
         case 'PageDown':
           evt.preventDefault();
-          
+
           let offsetDown = 0;
-          if(img.y <= 0 && nearestImgIdx < imgs.length-1) {
+          if(img.y <= 0) {
             offsetDown = 1;
-            if(isDualViewMode && img.getAttribute('page') !== 'double' && nearestImgIdx < imgs.length-2 && imgs[nearestImgIdx+1].y === img.y)
+            if(isDualViewMode && img.getAttribute('page') !== 'double' && nearestImgIdx < imgs.length-1 && imgs[nearestImgIdx+1].y === img.y)
               offsetDown = 2;
-            isAtTheEdgeOfPage = false;
-            imgs[nearestImgIdx+offsetDown].scrollIntoView();
-          }
-          else if(img.y === 0){
-            if(!isAtTheEdgeOfPage) {
-              isAtTheEdgeOfPage = true;
-              alert2('Press PgDn again to go to the next episode.');
+
+            if(nearestImgIdx+offsetDown >= imgs.length && imgs[nearestImgIdx].y <= 0) {
+              if(!isAtTheEdgeOfPage) {
+                isAtTheEdgeOfPage = true;
+                alert2('Press PgDn again to go to the next episode.');
+              }
+              else 
+                if(nextButton) nextButton.click();
+                else alert2("No 'next episode' button detected!");
+              break;
             }
-            else 
-              if(nextButton) nextButton.click();
-              else alert2("No 'next episode' button detected!");
           }
-          else imgs[nearestImgIdx+offsetDown].scrollIntoView();
+          isAtTheEdgeOfPage = false;
+          imgs[nearestImgIdx+offsetDown].scrollIntoView();
           break;
         case 'Shift+ ':
         case 'Shift+Spacebar':
         case 'PageUp':
           evt.preventDefault();
           
+          console.log(nearestImgIdx);
           let offsetUp = 0;
-          if(img.y >= 0 && nearestImgIdx > 0) {
+          if(img.y >= 0) {
             offsetUp = -1;
-            if(isDualViewMode && img.getAttribute('page') !== 'double' && nearestImgIdx > 2 && imgs[nearestImgIdx-1].y === img.y)
-              offsetUp = -2;
-            isAtTheEdgeOfPage = false;
-            imgs[nearestImgIdx+offsetUp].scrollIntoView();
-          }
-          else if(img.y === 0){
-            if(!isAtTheEdgeOfPage) {
-              isAtTheEdgeOfPage = true;
-              alert2('Press PgUp again to go to the previous episode.');
+
+            let startPage = 0;
+            if(insertBlankFirst) startPage = 1;
+            if(nearestImgIdx === startPage && imgs[nearestImgIdx].y >= 0) {
+              if(!isAtTheEdgeOfPage) {
+                isAtTheEdgeOfPage = true;
+                alert2('Press PgUp again to go to the previous episode.');
+              }
+              else 
+                if(prevButton) prevButton.click();
+                else alert2("No 'previous episode' button detected!");
+              break;
             }
-            else 
-              if(prevButton) prevButton.click();
-              else alert2("No 'previous episode' button detected!");
           }
-          else imgs[nearestImgIdx+offsetUp].scrollIntoView();
+          isAtTheEdgeOfPage = false;
+          imgs[nearestImgIdx+offsetUp].scrollIntoView();
+          break;
+        default:
+          isAtTheEdgeOfPage = false;
       }
     
       function findAbsMinIdx(arr) {
         //https://codeburst.io/javascript-finding-minimum-and-maximum-values-in-an-array-of-objects-329c5c7e22a2
-        let min = Math.abs(arr[0].y), minIdx = 0;
+        //in short, for-loop is the fastest
+        let startIdx = 0;
+        if(insertBlankFirst)
+          startIdx = 1;
+        let min = Math.abs(arr[startIdx].y), minIdx = startIdx;
 
-        for(let i=1, len=arr.length; i<len; i++) {
+        for(let i=startIdx+1, len=arr.length; i<len; i++) {
           let v = Math.abs(arr[i].y);
           if(v < min) {
             min = v;
@@ -393,6 +413,15 @@ $(window).on("load", () => {
         
         if((!insertBlankFirst && isRightToLeftMode) || !isDualViewMode) 
           img0.style.display = 'none';
+        else {
+          let lastNotDoublePage, len=imgs.length;
+          for(lastNotDoublePage=len-1; lastNotDoublePage>=0; lastNotDoublePage--) 
+            if(imgs[lastNotDoublePage].getAttribute('page') !== 'double') break;
+          
+          if(lastNotDoublePage < 0) lastNotDoublePage = len - 1;
+          img0.width = imgs[lastNotDoublePage].width;
+          img0.height = imgs[lastNotDoublePage].height;
+        }
         
         let div = document.getElementById('gallery_vertical');
         for(let i=0, len=imgs.length; i<len; i++) 
@@ -439,16 +468,6 @@ $(window).on("load", () => {
     
     let root = document.getElementById('root');
     root.style.maxWidth = '90%';
-    
-    if(insertBlankFirst) {
-      let lastNotDoublePage, len=imgs.length;
-      for(lastNotDoublePage=len-1; lastNotDoublePage>=0; lastNotDoublePage--) 
-        if(imgs[lastNotDoublePage].getAttribute('page') !== 'double') break;
-      
-      if(lastNotDoublePage < 0) lastNotDoublePage = len - 1;
-      img0.width = imgs[lastNotDoublePage].width;
-      img0.height = imgs[lastNotDoublePage].height;
-    }
   }
   resizeAllimages();
 
@@ -463,4 +482,4 @@ $(window).on("load", () => {
       $(msg).fadeOut();
     }, 2000);
   }
-});
+}
