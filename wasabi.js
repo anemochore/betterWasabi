@@ -101,7 +101,28 @@ let addedListeners = {};
 let isSilentRun = false;
 
 if(imgs.every(img => img.complete)) letsGo();
-else $(window).on("load", letsGo());
+else {
+  function onImagesLoaded(callback) {
+    let loaded = imgs.length;
+    for(let i=0, len=imgs.length; i<len; i++) {
+      if(imgs[i].complete) {
+        loaded--;
+      }
+      else {
+        imgs[i].addEventListener("load", () => {
+          loaded--;
+          if(loaded === 0) {
+            callback();
+          }
+        });
+      }
+      if(loaded === 0) {
+        callback();
+      }
+    }
+  }
+  onImagesLoaded(letsGo);
+}
 
 function letsGo() {
   msg.style.display = 'none';
@@ -141,10 +162,10 @@ function letsGo() {
     
     let widths = imgs.map(img => img.naturalWidth);
     let heights = imgs.map(img => img.naturalHeight);
-    let testWidths = widths.slice(1, widths.length-1);
-    let testHeights = heights.slice(1, heights.length-1);
-    let modeWidth = getMode(testWidths); //no need to slice
-    let modeHeight = getMode(testHeights); //no need to slice
+    let testWidths = widths.slice();    //widths.slice(1, widths.length-1);
+    let testHeights = heights.slice();  //heights.slice(1, heights.length-1);
+    let modeWidth = getMode(testWidths);
+    let modeHeight = getMode(testHeights);
     
     let maxWidth = Math.max(...testWidths);
     let minWidth = Math.min(...testWidths);
@@ -157,6 +178,7 @@ function letsGo() {
       isDualViewMode = false;
     }
     else {
+      console.log('else : ', modeWidth, maxWidth);
       areImagesFixed = true;
       if(isAlmostEqual(modeWidth*2, maxWidth)) //이미지 너비 최빈값*2가 최대 너비와 거의 같다면 믹스트 모드
         areImagesFixed = false;
@@ -186,10 +208,10 @@ function letsGo() {
         
         for(let i=1, len=imgs.length; i<len; i++) 
           if(isAlmostEqual(widths[i], maxWidth)) 
-            imgs[i].setAttribute('page', 'double');
+            imgs[i].setAttribute('page', 'double'); //유녀전기에서 크롬과 사파리 동작이 다름?!
           else 
             if(imgs[i-1].getAttribute('page') === 'double') {
-              imgs[i].setAttribute('page', 'fixed-left');
+              imgs[i].setAttribute('page', 'left');
               currentPage.orientation = 'left';
             }
             else 
@@ -363,7 +385,7 @@ function letsGo() {
             offsetUp = -1;
 
             let startPage = 0;
-            if(insertBlankFirst) startPage = 1;
+            if(insertBlankFirst && isDualViewMode && img.getAttribute('page') !== 'double') startPage = 1;
             if(nearestImgIdx === startPage && imgs[nearestImgIdx].y >= 0) {
               if(!isAtTheEdgeOfPage) {
                 isAtTheEdgeOfPage = true;
@@ -416,11 +438,16 @@ function letsGo() {
           img0.style.display = 'none';
         else {
           let notDoublePage, len=imgs.length;
+          console.log(imgs[0].src)
+          console.log(imgs[0].src !== '/template/images/transparent.png')
           for(notDoublePage=0; notDoublePage<len; notDoublePage++) 
-            if(imgs[notDoublePage].getAttribute('page') !== 'double') break;
+            if(imgs[notDoublePage].getAttribute('page') !== 'double'
+          && imgs[notDoublePage].src.indexOf('/template/images/transparent.png') === -1) break;
           
-          if(notDoublePage === len) notDoublePage = 0;
+          if(notDoublePage === len) notDoublePage = len - 1;
+          console.log('flush :'+img0.width + ' ' + notDoublePage);
           img0.width = imgs[notDoublePage].width;
+          console.log('flush :'+img0.width + ' ' + notDoublePage);
           img0.height = imgs[notDoublePage].height;
         }
         
@@ -476,11 +503,16 @@ function letsGo() {
       img0.style.display = 'none';
     else {
       let notDoublePage, len=imgs.length;
+      console.log(imgs[0].src)
+      console.log(imgs[0].src !== '/template/images/transparent.png')
       for(notDoublePage=0; notDoublePage<len; notDoublePage++) 
-        if(imgs[notDoublePage].getAttribute('page') !== 'double') break;
+        if(imgs[notDoublePage].getAttribute('page') !== 'double'
+          && imgs[notDoublePage].src.indexOf('/template/images/transparent.png') === -1) break;
       
-      if(notDoublePage === len) notDoublePage = 0;
+      if(notDoublePage === len) notDoublePage = len - 1;
+      console.log('resize :'+img0.width + ' ' + notDoublePage);
       img0.width = imgs[notDoublePage].width;
+      console.log('resize :'+img0.width + ' ' + notDoublePage);
       //img0.height = imgs[notDoublePage].height;
     }
     
