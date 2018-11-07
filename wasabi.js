@@ -38,7 +38,7 @@
   let isDualViewMode    = true;   //if most images have the same widths, this will be false
   let isRightToLeftMode = true;   //works only when isDualViewMode is true
   let insertBlankFirst  = true;   //works only when isDualViewMode is true
-  let isEndlessMode     = true;
+  let isEndlessMode     = false;  //todo
   //*******************
   //default setting end
 
@@ -429,7 +429,7 @@
           //https://codeburst.io/javascript-finding-minimum-and-maximum-values-in-an-array-of-objects-329c5c7e22a2
           //in short, for-loop is the fastest
           let startIdx = 0;
-          if(insertBlankFirst) startIdx = 1;
+          if(insertBlankFirst && isDualViewMode) startIdx = 1;
           let min = Math.abs(arr[startIdx].y), minIdx = startIdx;
 
           for(let i=startIdx+1, len=arr.length; i<len; i++) {
@@ -444,7 +444,6 @@
         }
         
         function flushImages() {
-          console.log('flush: ', img0, imgs[0]);
           if(isDualViewMode) {
             for(let i=0, len=imgs.length; i<len; i++) {
               imgs[i].style.display = 'inline';
@@ -499,7 +498,7 @@
             ' insertBlankFirst: '   + insertBlankFirst);
       
       isSilentRun = true;
-      if(isRightToLeftMode) 
+      if(isDualViewMode && isRightToLeftMode) 
         document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Tab'})); //tab and flush with no scroll
       else
         document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'flush with no scroll'}));
