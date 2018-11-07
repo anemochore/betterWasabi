@@ -35,9 +35,9 @@
 
   //default setting start
   //*********************
-  let isDualViewMode    = true; //if most images have the same widths, this will be false
-  let isRightToLeftMode = true; //works only when isDualViewMode is true
-  let insertBlankFirst  = true; //works only when isDualViewMode is true
+  let isDualViewMode    = true;   //if most images have the same widths, this will be false
+  let isRightToLeftMode = true;   //works only when isDualViewMode is true
+  let insertBlankFirst  = true;   //works only when isDualViewMode is true
   let isEndlessMode     = true;
   //*******************
   //default setting end
@@ -93,11 +93,12 @@
     }
     imgs = [...targetDiv.querySelectorAll('img.lz-lazyloaded')];
     
+    //setting the first blank page
     let img0 = imgs[0].cloneNode();
     img0.src = '/template/images/transparent.png';
+    
     return [img0, imgs];
   }
-  
   let img0Next, imgsNext;
 
   
@@ -139,7 +140,7 @@
       addedListeners[eventType] = fun;
       window.addEventListener(eventType, fun);
     })('resize', resizeAllimages);
-    
+      
     //add page attributes
     function addPageAttributes(img0, imgs) {
       class Page {
@@ -176,8 +177,6 @@
       else {
         let modeWidthNormalized = modeWidth/modeHeight;
         let maxWidthNormalized = maxWidth/testHeights[testWidths.indexOf(maxWidth)];
-        console.log(maxWidth, testHeights[testWidths.indexOf(maxWidth)], maxWidthNormalized);
-        console.log(modeWidth, modeHeight, modeWidthNormalized);
         
         areImagesFixed = true;
         if(isAlmostEqual(modeWidthNormalized*2, maxWidthNormalized)) //이미지 너비 최빈값*2가 최대 너비와 거의 같다면 믹스트 모드
@@ -216,6 +215,7 @@
                 imgs[i].setAttribute('page', currentPage.turn());
         }
       }
+      return [img0, imgs];
         
       function getMode(arr) {
         return arr.sort((a,b) =>
@@ -230,7 +230,7 @@
         return a/b > THRESHOLD;
       }
     }
-    addPageAttributes(img0, imgs);
+    [img0, imgs] = addPageAttributes(img0, imgs);
 
     //add keydown listerner
     (() => {
@@ -444,6 +444,7 @@
         }
         
         function flushImages() {
+          console.log('flush: ', img0, imgs[0]);
           if(isDualViewMode) {
             for(let i=0, len=imgs.length; i<len; i++) {
               imgs[i].style.display = 'inline';
