@@ -94,7 +94,6 @@ let imgs = (() => {
 })();
 
 let img0 = imgs[0].cloneNode();
-let width0;
 img0.src = '/template/images/transparent.png';
 
 let addedListeners = {};
@@ -124,32 +123,25 @@ else {
   onImagesLoaded(letsGo);
 }
 
+//start
 function letsGo() {
   msg.style.display = 'none';
   
-  function addWindowListenerIfNone(eventType, fun) {
+  //add window listener if none
+  ((eventType, fun) => {
     if(addedListeners[eventType]) return;
     addedListeners[eventType] = fun;
     window.addEventListener(eventType, fun);
-  }
-  addWindowListenerIfNone('resize', resizeAllimages);
+  })('resize', resizeAllimages);
   
-  function addAttributesIfNone() {
+  //add page attributes if none
+  (() => {
     if(imgs[0].hasAttribute('page')) return;
 
     class Page {
       constructor(orientation = 'right') {
         this.orientation = orientation;
       }
-
-      /*
-      get next() {
-        if(this.orientation === 'left') 
-          return 'right';
-        else 
-          return 'left';
-      }
-      */
 
       turn() {
         if(this.orientation === 'left') 
@@ -178,15 +170,11 @@ function letsGo() {
       isDualViewMode = false;
     }
     else {
-      console.log('else : ', modeWidth, maxWidth);
       areImagesFixed = true;
       if(isAlmostEqual(modeWidth*2, maxWidth)) //이미지 너비 최빈값*2가 최대 너비와 거의 같다면 믹스트 모드
         areImagesFixed = false;
       
       console.log('mixed images!');  //dev
-      
-      //setting first blank
-      width0 = modeWidth;
       
       //assuming isRightToLeftMode is false at the time of initializing
       //then, the first blank page should be left
@@ -194,7 +182,7 @@ function letsGo() {
       if(insertBlankFirst) {
         $(imgs[0]).before(img0);
         imgs = [img0].concat(imgs);
-        widths = [width0].concat(widths);
+        widths = [modeWidth].concat(widths);
       }
       
       if(areImagesFixed) 
@@ -231,10 +219,10 @@ function letsGo() {
       if(a > b) [a, b] = [b, a];  //B should be greater than A
       return a/b > THRESHOLD;
     }
-  }
-  addAttributesIfNone();
-  
-  function addKeyDownListernerIfNone() {
+  })();
+
+  //add keydown listerner if none
+  (() => {
     if(document.onkeydown) return;
   
     document.onkeydown = evt => {
@@ -408,8 +396,7 @@ function letsGo() {
         //https://codeburst.io/javascript-finding-minimum-and-maximum-values-in-an-array-of-objects-329c5c7e22a2
         //in short, for-loop is the fastest
         let startIdx = 0;
-        if(insertBlankFirst)
-          startIdx = 1;
+        if(insertBlankFirst) startIdx = 1;
         let min = Math.abs(arr[startIdx].y), minIdx = startIdx;
 
         for(let i=startIdx+1, len=arr.length; i<len; i++) {
@@ -438,16 +425,12 @@ function letsGo() {
           img0.style.display = 'none';
         else {
           let notDoublePage, len=imgs.length;
-          console.log(imgs[0].src)
-          console.log(imgs[0].src !== '/template/images/transparent.png')
           for(notDoublePage=0; notDoublePage<len; notDoublePage++) 
             if(imgs[notDoublePage].getAttribute('page') !== 'double'
           && imgs[notDoublePage].src.indexOf('/template/images/transparent.png') === -1) break;
           
           if(notDoublePage === len) notDoublePage = len - 1;
-          console.log('flush :'+img0.width + ' ' + notDoublePage);
           img0.width = imgs[notDoublePage].width;
-          console.log('flush :'+img0.width + ' ' + notDoublePage);
           img0.height = imgs[notDoublePage].height;
         }
         
@@ -473,8 +456,7 @@ function letsGo() {
         return imgs[nearestImgIdx];
       }
     };
-  }
-  addKeyDownListernerIfNone();
+  })();
 
   //first run
   (() => {
@@ -503,16 +485,12 @@ function letsGo() {
       img0.style.display = 'none';
     else {
       let notDoublePage, len=imgs.length;
-      console.log(imgs[0].src)
-      console.log(imgs[0].src !== '/template/images/transparent.png')
       for(notDoublePage=0; notDoublePage<len; notDoublePage++) 
         if(imgs[notDoublePage].getAttribute('page') !== 'double'
           && imgs[notDoublePage].src.indexOf('/template/images/transparent.png') === -1) break;
       
       if(notDoublePage === len) notDoublePage = len - 1;
-      console.log('resize :'+img0.width + ' ' + notDoublePage);
       img0.width = imgs[notDoublePage].width;
-      console.log('resize :'+img0.width + ' ' + notDoublePage);
       //img0.height = imgs[notDoublePage].height;
     }
     
