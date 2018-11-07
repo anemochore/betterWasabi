@@ -16,16 +16,6 @@ $('*[class*="impactify"]').remove();
 document.getElementById('header-anchor').style.display = 'none';
 document.getElementById('footer-anchor').style.display = 'none';
 
-
-//default setting start
-//*********************
-let isDualViewMode    = true; //if most images have the same widths, this will be false
-let isRightToLeftMode = true; //works only when isDualViewMode is true
-let insertBlankFirst  = true; //works only when isDualViewMode is true
-//*******************
-//default setting end
-
-
 //https://medium.com/snips-ai/how-to-block-third-party-scripts-with-a-few-lines-of-javascript-f0b08b9c4c0
 const observer = new MutationObserver(mutations => {
   mutations.forEach(({ addedNodes }) => {
@@ -42,17 +32,27 @@ observer.observe(document.documentElement, {
 });
 
 
+//default setting start
+//*********************
+let isDualViewMode    = true; //if most images have the same widths, this will be false
+let isRightToLeftMode = true; //works only when isDualViewMode is true
+let insertBlankFirst  = true; //works only when isDualViewMode is true
+//*******************
+//default setting end
+
+
 //msg-box for alert2()
 let msgTimer;
 let msg = document.createElement('div');
 with(msg.style) {
+  opacity = '0.75';
   position = 'fixed';
   top = '47.5%';
   left = '45%';
   textAlign = 'center';
   width = '300px';
-  padding = '0';
-  border = '1px solid LightSeaGreen';
+  padding = '2px';
+  border = '0';
   backgroundColor = 'LawnGreen ';
   zIndex = '999999';
   overflow = 'auto';
