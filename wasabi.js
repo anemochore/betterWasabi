@@ -1,17 +1,16 @@
+// ==UserScript==
+// @name better wasabi
+// @namespace
+// @description lol
+// @author feelyou
+// @match http://wasabisyrup.com/*
+// @run-at document-end
+// @grant none
+// @version 2018-11-5
+// @credit
+// ==/UserScript==
+
 (() => {
-  // ==UserScript==
-  // @name better wasabi
-  // @namespace
-  // @description lol
-  // @author feelyou
-  // @match http://wasabisyrup.com/*
-  // @run-at document-end
-  // @grant none
-  // @version 2018-11-5
-  // @credit
-  // ==/UserScript==
-
-
   //ad block
   $('*[class*="impactify"]').remove();
   document.getElementById('header-anchor').style.display = 'none';
@@ -75,9 +74,9 @@
   }
 
   //imgs
-  let [img0, imgs] = getImgs();
-  function getImgs() {
-    let targetDiv = document.getElementById('gallery_vertical');
+  let [img0, imgs] = getImgs(document);
+  function getImgs(el) {
+    let targetDiv = el.getElementById('gallery_vertical');
     let imgs = [...targetDiv.querySelectorAll('img.lz-lazyloading')];
     for(let i=0, len=imgs.length; i<len; i++) {
       let img = imgs[i];
@@ -100,11 +99,10 @@
     return [img0, imgs];
   }
   let img0Next, imgsNext;
+  let isStillPreloading;
 
   
-  let addedListeners = {};
   let isSilentRun = false;
-
   if(imgs.every(img => img.complete)) letsGo();
   else onImagesLoaded(imgs, letsGo);
 
@@ -136,10 +134,7 @@
     root.style.maxWidth = '95%';
     
     //add window listener
-    ((eventType, fun) => {
-      addedListeners[eventType] = fun;
-      window.addEventListener(eventType, fun);
-    })('resize', resizeAllimages);
+    window.addEventListener('resize', resizeAllimages);
       
     //add page attributes
     function addPageAttributes(img0, imgs) {
@@ -409,14 +404,40 @@
         }
       
         function preloadNext() {
-          //todo: xhttprequest next page
+          //todo: xhttprequest next page and get imgs
+          
+          let docNext = '';  //todo
+          [img0Next, imgsNext] = getImgs(docNext);
+          isStillPreloading = true;
+          onImagesLoaded(imgsNext, () => {
+            isStillPreloading = false;
+            [img0Next, imgsNext] = addPageAttributes(img0Next, imgsNext);
+            
+            let div = document.createElement('div');
+            div.className = 'viewer-hidden';
+            div.id = 'gallery_vertical_next';
+            
+            for(let i=0, len=imgsNext.length; i<len; i++) 
+              div.appendChild(imgsNext[i]);
+            
+            let targetDiv = document.getElementById('gallery_vertical').parentNode;
+            targetDiv.appendChild(div);
+          });
         }
           
         function showNext() {
+          if(isStillPreloading) {
+            alert2('Still preloading. Please try again later...');
+            return;
+          }
+          
+          img0 = img0Next.cloneNode();
+          img0Next = null;
           imgs = imgsNext.slice();
-          imgsNext = undefined;
+          imgsNext = null;
           
           let div = document.getElementById('gallery_vertical');
+          div.style.backgroundColor = 'lightGray';
           div.id = 'gallery_vertical_prev';
           div = document.getElementById('gallery_vertical_next');
           div.id = 'gallery_vertical';
