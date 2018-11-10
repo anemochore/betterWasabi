@@ -152,32 +152,23 @@
         }
       }
       
-      let areImagesFixed;
+      let ratios = imgs.map(img => (img.naturalWidth/img.naturalHeight).toFixed(2));  //hard-coded to 2 decimals
+      let mode = getMode(ratios.slice());
+      let modeCount = ratios.filter(ratio => ratio === mode).length;
+      let max = Math.max(...ratios);
       
-      let widths = imgs.map(img => img.naturalWidth);
-      let heights = imgs.map(img => img.naturalHeight);
-      let testWidths = widths.slice();    //widths.slice(1, widths.length-1);
-      let testHeights = heights.slice();  //heights.slice(1, heights.length-1);
-      let modeWidth = getMode(testWidths);
-      let modeHeight = getMode(testHeights);
-      let maxWidth = Math.max(...testWidths);
-      
-      if(modeWidth > modeHeight) { //가로가 세로보다 넓은 이미지가 대다수라면 강제로 싱글 뷰 모드
+      let areImagesFixed = true;
+      if(mode > 1 && isAlmostEqual(modeCount, ratios.length)) { //가로가 세로보다 넓은 이미지가 대다수라면 강제로 싱글 뷰 모드
         for(let i=0, len=imgs.length; i<len; i++) 
           imgs[i].setAttribute('page', 'double');
         
-        areImagesFixed = true;
         isDualViewMode = false; //엔들리스 모드에서 이게 바뀌는 일은 없다고 위험하게-_- 가정
       }
       else {
-        let modeWidthNormalized = modeWidth/modeHeight;
-        let maxWidthNormalized = maxWidth/testHeights[testWidths.indexOf(maxWidth)];
-        
-        areImagesFixed = true;
-        if(isAlmostEqual(modeWidthNormalized*2, maxWidthNormalized)) //이미지 너비 최빈값*2가 최대 너비와 거의 같다면 믹스트 모드
+        if(isAlmostEqual(mode*2, max)) //이미지 너비 최빈값*2가 최대 너비와 거의 같다면 믹스트 모드
           areImagesFixed = false;
         
-        console.log('images have mixed widths!');  //dev
+        console.log('images are fixed-widths: ' + areImagesFixed);  //dev
         
         //assuming isRightToLeftMode is false at the time of initializing
         //then, the first blank page should be left
@@ -185,21 +176,20 @@
         if(insertBlankFirst) {  //엔들리스 모드에서 이게 바뀔 일은 없다고 위험하게-_- 가정
           $(imgs[0]).before(img0);
           imgs = [img0].concat(imgs);
-          widths = [modeWidth].concat(widths);
-          heights = [modeHeight].concat(heights);
+          ratios = [mode].concat(ratios);
         }
         
         if(areImagesFixed) 
           for(let i=0, len=imgs.length; i<len; i++) 
             imgs[i].setAttribute('page', currentPage.turn());
         else {
-          if(isAlmostEqual(widths[0]/heights[0], maxWidthNormalized)) 
+          if(isAlmostEqual(ratios[0], max)) 
             imgs[0].setAttribute('page', 'double');
           else 
             imgs[0].setAttribute('page', currentPage.turn());
           
           for(let i=1, len=imgs.length; i<len; i++) 
-            if(isAlmostEqual(widths[i]/heights[i], maxWidthNormalized)) 
+            if(isAlmostEqual(ratios[i], max)) 
               imgs[i].setAttribute('page', 'double');
             else 
               if(imgs[i-1].getAttribute('page') === 'double') {
@@ -213,6 +203,7 @@
       return [img0, imgs];
         
       function getMode(arr) {
+        //modifies original array!
         return arr.sort((a,b) =>
           arr.filter(v => v===a).length - arr.filter(v => v===b).length
         ).pop();
@@ -224,6 +215,7 @@
         if(a > b) [a, b] = [b, a];  //B should be greater than A
         return a/b > THRESHOLD;
       }
+      
     }
     [img0, imgs] = addPageAttributes(img0, imgs);
 
